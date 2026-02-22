@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Куратор вирусных котов</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>🐾 Куратор вирусных котов</h1>
+    <div class="period-switch">
+      <a class="btn {{ 'active' if period=='day' else '' }}" href="/?period=day">Лучшее за 24 часа</a>
+      <a class="btn {{ 'active' if period=='week' else '' }}" href="/?period=week">Лучшее за 7 дней</a>
+      <button id="refresh-btn" class="btn">Обновить ленту</button>
+    </div>
+  </header>
+
+  <section class="admin-panel">
+    <h2>Настройки</h2>
+    <form id="settings-form">
+      <div class="grid">
+        <label>Bot Token <input type="password" name="telegram_bot_token" value="{{ settings.telegram_bot_token }}"></label>
+        <label>Channel ID <input type="text" name="telegram_channel_id" value="{{ settings.telegram_channel_id }}"></label>
+        <label>Мин. апвоутов <input type="number" name="min_ups" value="{{ settings.min_ups }}"></label>
+        <label class="checkbox"><input type="checkbox" name="auto_refresh" {% if settings.auto_refresh %}checked{% endif %}> Автообновление (30 мин)</label>
+      </div>
+      <div class="subs">
+        {% for sub in subreddits %}
+          <label class="checkbox"><input type="checkbox" name="sub_{{ sub }}" {% if flags.get(sub, True) %}checked{% endif %}> r/{{ sub }}</label>
+        {% endfor %}
+      </div>
+      <button class="btn" type="submit">Сохранить настройки</button>
+    </form>
+  </section>
+
+  <main class="feed">
+    {% for post in posts %}
+      <article class="card">
+        <div class="media-wrap">
+          {% if post.media_type == 'video' %}
+            <video controls preload="metadata" src="{{ post.media_url }}"></video>
+          {% else %}
+            <img src="{{ post.media_url }}" alt="{{ post.title_ru }}" loading="lazy" />
+          {% endif %}
+        </div>
+        <div class="content">
+          <h3>{{ post.title_ru }}</h3>
+          <p class="meta">❤️ {{ post.ups }} · r/{{ post.subreddit }} · {{ post.created_human }}</p>
+          <div class="actions">
+            <a class="btn" target="_blank" href="{{ post.permalink }}">Открыть оригинал</a>
+            <a class="btn" href="{{ post.media_url }}" download>Скачать</a>
+            <button class="btn send-btn" data-post-id="{{ post.id }}">Отправить в Telegram</button>
+          </div>
+        </div>
+      </article>
+    {% endfor %}
+  </main>
+
+  <div id="toast"></div>
+  <script>
+    window.APP_CONFIG = { autoRefresh: {{ 'true' if settings.auto_refresh else 'false' }} };
+  </script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
